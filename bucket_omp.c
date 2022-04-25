@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <math.h>
+#include <omp.h>
 
 #define SIZE 200
 #define BUCKETNUM 10
@@ -65,8 +66,12 @@ void bucketSort(int arr[SIZE], int n){
     }
     
     // sort the buckets
-    for (int i = 0; i < n; i++)
+    #pragma omp parallel shared(b,index) 
+    {
+      #pragma omp for
+      for (int i = 0; i < n; i++)
         insertion_sort(b[i], index[i]);
+    }
 
 
     // concatenate buckets (gather step)
