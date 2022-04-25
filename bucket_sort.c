@@ -5,12 +5,21 @@
 #include <time.h>
 #include <math.h>
 
-#define SIZE 50
-#define BUCKETNUM 50
+#define SIZE 200
+#define BUCKETNUM 10
 
-int cmpfunc (const void * a, const void * b)
-{
- return ( *(float*)a - *(float*)b );
+void insertion_sort(int arr[SIZE], int n){
+    int i, key, j;
+    for (i = 1; i < n; i++) {
+        key = arr[i];
+        j = i - 1;
+ 
+        while (j >= 0 && arr[j] > key) {
+            arr[j + 1] = arr[j];
+            j = j - 1;
+        }
+        arr[j + 1] = key;
+    }
 }
 
 
@@ -33,19 +42,21 @@ float minMax(int array[SIZE], int *min, int *max)
 
 
 void bucketSort(int arr[SIZE], int n){
+    int max, min;
+    minMax(arr,&min,&max);
+    float value = (max - min) / (n-1);
+    int range = ceil(value);
+
     int bucket_size = 3*(SIZE/n);
     int b[n][bucket_size];
     int index[n];
     for (int i=0;i<n;i++)
         index[i] = 0;
-    int max, min;
-    minMax(arr,&min,&max);
-    float value = (max - min) / (n-1);
-    int range = ceil(value);
+    
     double max_index = n-2;
 
-    // // assign buckets for each element from arr (scatter step)
-    for (int i = 0; i < n; i++) {
+    // assign buckets for each element from arr (scatter step)
+    for (int i = 0; i < SIZE; i++) {
         int bi = (arr[i] - min) / range; // Index in bucket
 
         if (bi > max_index){
@@ -54,10 +65,11 @@ void bucketSort(int arr[SIZE], int n){
         b[bi][index[bi]] = arr[i];
         index[bi]++;
     }
-
+    
     // sort the buckets
     for (int i = 0; i < n; i++)
-        qsort(b[i], index[i],sizeof(int),cmpfunc);
+        insertion_sort(b[i], index[i]);
+
 
     // concatenate buckets (gather step)
     int indx = 0;
@@ -72,19 +84,20 @@ int main(){
 
     // fill array with random values 
     for(int i=0;i<SIZE;i++){
-        arr[i] = rand()%500;
+        arr[i] = rand()%100;
     }
 
-    printf("Original array: ");
+    printf("Original array:\n");
     for (int i = 0; i < SIZE; i++)
         printf("%d ", arr[i]);
+    printf("\n");
 
     bucketSort(arr, BUCKETNUM);
 
-    printf("\n ************************************\n");
-    printf("\nSorted array:");
+    printf("\nSorted array:\n");
     for (int i = 0; i < SIZE; i++)
         printf("%d ", arr[i]);
+    printf("\n");
     
     return 0;
     
