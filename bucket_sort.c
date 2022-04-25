@@ -14,7 +14,7 @@ int cmpfunc (const void * a, const void * b)
 }
 
 
-float minMax(float array[SIZE],float *min,float *max)
+float minMax(int array[SIZE], int *min, int *max)
 {
   int length;
   length = SIZE;
@@ -22,30 +22,23 @@ float minMax(float array[SIZE],float *min,float *max)
   *max = array[0];
   *min = array[0];
 
-  for(i; i<length; i++)
-  {
-    if(*max < array[i])
-    {
+  for (i; i<length; i++) {
+    if (*max < array[i])
       *max = array[i];
-    }
 
-    if(*min > array[i])
-    {
+    if (*min > array[i])
       *min = array[i];
-    }
   }
-  printf("min: %f max: %f", *min,*max);
  }  
 
 
-void bucketSort(float arr[SIZE], int n){
+void bucketSort(int arr[SIZE], int n){
     int bucket_size = 3*(SIZE/n);
-    float b[n][bucket_size];
+    int b[n][bucket_size];
     int index[n];
-    for(int i=0;i<n;i++){
+    for (int i=0;i<n;i++)
         index[i] = 0;
-    }
-    float max, min;
+    int max, min;
     minMax(arr,&min,&max);
     float value = (max - min) / (n-1);
     int range = ceil(value);
@@ -64,7 +57,7 @@ void bucketSort(float arr[SIZE], int n){
 
     // sort the buckets
     for (int i = 0; i < n; i++)
-        qsort(b[i], index[i],sizeof(float),cmpfunc);
+        qsort(b[i], index[i],sizeof(int),cmpfunc);
 
     // concatenate buckets (gather step)
     int indx = 0;
@@ -75,23 +68,23 @@ void bucketSort(float arr[SIZE], int n){
 
 int main(){
     srand(time(NULL));
-    float arr[SIZE];
+    int arr[SIZE];
 
     // fill array with random values 
     for(int i=0;i<SIZE;i++){
-        arr[i] = rand()+30;
+        arr[i] = rand()%500;
     }
 
     printf("Original array: ");
     for (int i = 0; i < SIZE; i++)
-        printf("%f ", arr[i]);
+        printf("%d ", arr[i]);
 
     bucketSort(arr, BUCKETNUM);
 
     printf("\n ************************************\n");
     printf("\nSorted array:");
     for (int i = 0; i < SIZE; i++)
-        printf("%f ", arr[i]);
+        printf("%d ", arr[i]);
     
     return 0;
     
