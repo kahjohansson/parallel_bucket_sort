@@ -28,6 +28,23 @@ __global__ void insertionSort(int *b, int *index, int bucket_size, int n_buckets
 
 }
 
+float minMax(int array[SIZE], int *min, int *max)
+{
+  int length;
+  length = SIZE;
+  int i = 1;
+  *max = array[0];
+  *min = array[0];
+
+  for (i; i<length; i++) {
+    if (*max < array[i])
+      *max = array[i];
+
+    if (*min > array[i])
+      *min = array[i];
+  }
+ } 
+
 void bucketSort(int arr[SIZE],int n){
     int max,min;
     minMax(arr,&min,&max);
