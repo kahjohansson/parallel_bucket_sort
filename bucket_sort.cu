@@ -107,7 +107,7 @@ int main(){
         printf("%d ", arr[i]);
     printf("\n");
 
-    bucketSort<<>>(arr, BUCKETNUM);
+    bucketSort(arr, BUCKETNUM);
 
     printf("\nSorted array:\n");
     for (int i = 0; i < SIZE; i++)
