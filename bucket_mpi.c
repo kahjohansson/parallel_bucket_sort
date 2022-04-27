@@ -41,7 +41,10 @@ float minMax(int array[SIZE], int *min, int *max)
  }  
 
 
-void bucketSort(int arr[SIZE], int n){
+void bucketSort(int arr[SIZE], int n, int pid, int bucket_per_proc){
+
+    if (pid == 0){
+
     int max, min;
     minMax(arr,&min,&max);
     float value = (max - min) / (n-1);
@@ -66,39 +69,56 @@ void bucketSort(int arr[SIZE], int n){
         index[bi]++;
     }
     
+    }
+    
     // sort the buckets
     for (int i = 0; i < n; i++)
         insertion_sort(b[i], index[i]);
 
+    if (pid == 0){
 
     // concatenate buckets (gather step)
     int indx = 0;
     for (int i = 0; i < n; i++)
         for (int j = 0; j < index[i]; j++)
             arr[indx++] = b[i][j];
+    }
 }
 
-int main(){
-    srand(time(NULL));
-    int arr[SIZE];
+int main(int argc, char **argv){
 
-    // fill array with random values 
-    for(int i=0;i<SIZE;i++){
-        arr[i] = rand()%100;
+    int my_id, root_process, ierr, num_procs, an_id;
+    MPI_Status status;
+   
+    ierr = MPI_Init(&argc, &argv);
+
+    root_process = 0;
+
+    ierr = MPI_Comm_rank(MPI_COMM_WORLD, &my_id);
+    ierr = MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+
+    if(my_id == root_process){
+
+        bucket_per_proc = BUCKETNUM / num_procs;
+
+        srand(time(NULL));
+        int arr[SIZE];
+
+        // fill array with random values 
+        for(int i=0;i<SIZE;i++){
+            arr[i] = rand()%100;
+        }
+
     }
+    bucketSort(arr, BUCKETNUM, my_id, bucket_per_proc);
 
-    printf("Original array:\n");
-    for (int i = 0; i < SIZE; i++)
-        printf("%d ", arr[i]);
-    printf("\n");
+    if(my_id == root_process) {
 
-    bucketSort(arr, BUCKETNUM);
-
-    printf("\nSorted array:\n");
-    for (int i = 0; i < SIZE; i++)
-        printf("%d ", arr[i]);
-    printf("\n");
+        // printf("\nSorted array:\n");
+        // for (int i = 0; i < SIZE; i++)
+        //     printf("%d ", arr[i]);
+        // printf("\n\n");
+    }
     
     return 0;
-    
 }
