@@ -3,9 +3,16 @@
 #include <sys/time.h>
 #include <time.h>
 #include <math.h>
+#include <omp.h>
 
 #define SIZE 100000
 #define BUCKETNUM 10
+#define NUM_THREADS 4
+
+int compare( const void * n1, const void * n2)
+{
+    return (*(int*)n1 - *(int*)n2);
+}
 
 void insertion_sort(int *arr, int n){
     int i, key, j;
@@ -20,12 +27,6 @@ void insertion_sort(int *arr, int n){
         arr[j + 1] = key;
     }
 }
-
-int compare( const void * n1, const void * n2)
-{
-    return (*(int*)n1 - *(int*)n2);
-}
-
 
 float minMax(int array[SIZE], int *min, int *max)
 {
@@ -71,9 +72,12 @@ void bucketSort(int arr[SIZE], int n){
     }
     
     // sort the buckets
+    
+    #pragma omp parallel for schedule(dynamic) num_threads(NUM_THREADS)
     for (int i = 0; i < n; i++)
-        // qsort(b[i], index[i],sizeof(int),compare);
-        insertion_sort(b[i], index[i]);
+            // qsort(b[i], index[i],sizeof(int),compare);
+            insertion_sort(b[i], index[i]);
+    
 
 
     // concatenate buckets (gather step)
@@ -97,8 +101,8 @@ int main(){
     //     printf("%d ", arr[i]);
     // printf("\n");
 
-    struct timeval start,end;
-
+    struct timeval start, end;
+    printf("%d\n",NUM_THREADS);
     gettimeofday(&start,0);
 
     bucketSort(arr, BUCKETNUM);
@@ -108,8 +112,9 @@ int main(){
     long sec = end.tv_sec - start.tv_sec;
     long micro = end.tv_usec - start.tv_usec;
     double elapsed = sec + micro*1e-6;
-    printf("1\n");
     printf("Elapsed time: %.3f seconds.\n", elapsed);
+    
+    // printf("Result is: %d\n", ans);
 
     // printf("\nSorted array:\n");
     // for (int i = 0; i < SIZE; i++)

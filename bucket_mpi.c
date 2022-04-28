@@ -26,6 +26,20 @@ int compare( const void * n1, const void * n2)
     return (*(int*)n1 - *(int*)n2);
 }
 
+void insertion_sort(int *arr, int n){
+    int i, key, j;
+    for (i = 1; i < n; i++) {
+        key = arr[i];
+        j = i - 1;
+
+        while (j >= 0 && arr[j] > key) {
+            arr[j + 1] = arr[j];
+            j = j - 1;
+        }
+        arr[j + 1] = key;
+    }
+}
+
 void mpi_bucket(Param * p) {
 
   // Timer
@@ -51,10 +65,10 @@ void mpi_bucket(Param * p) {
     for(int i = 0; i < p->array_size; i++)
       array[i] = rand()%(p->max_num);
   
-    fprintf(stderr, "\n\nOriginal Array:\n");
-    for(i=0;i<p->array_size;i++)
-      fprintf(stderr, "%d ",array[i]);
-    fprintf(stderr, "\n");
+    // fprintf(stderr, "\n\nOriginal Array:\n");
+    // for(i=0;i<p->array_size;i++)
+    //   fprintf(stderr, "%d ",array[i]);
+    // fprintf(stderr, "\n");
     
   }
   Bucket ** buckets = (Bucket **) malloc(sizeof(Bucket*)*num_buckets);
@@ -97,7 +111,8 @@ void mpi_bucket(Param * p) {
   }
   bucket.index = current;
 
-  qsort(&bucket.array[0], current, sizeof(int),compare);
+  // qsort(&bucket.array[0], current, sizeof(int),compare);
+  insertion_sort(&bucket.array[0], current);
 
   int * sizes = (int *) malloc(sizeof(int)*p->size);
   MPI_Gather(&current,1,MPI_INT,sizes,1,MPI_INT,0,MPI_COMM_WORLD);
@@ -114,10 +129,11 @@ void mpi_bucket(Param * p) {
   if (p->rank == 0) {
     end = MPI_Wtime();
     fprintf(stderr,"\nElapsed time: %f\n",end-start);
-    for(i=0;i<p->array_size;i++){
-      fprintf(stdout,"%d ", array[i]);
-    }
-    fprintf(stdout,"\n ");
+    // for(i=0;i<p->array_size;i++){
+    //   fprintf(stdout,"%d ", array[i]);
+    // }
+    // fprintf(stdout,"\n ");
+
     free(array);
   }
   return;
