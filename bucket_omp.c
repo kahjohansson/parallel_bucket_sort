@@ -1,26 +1,17 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/time.h>
 #include <time.h>
 #include <math.h>
 #include <omp.h>
 
-#define SIZE 200
+#define SIZE 20000
 #define BUCKETNUM 10
 
-void insertion_sort(int arr[SIZE], int n){
-    int i, key, j;
-    for (i = 1; i < n; i++) {
-        key = arr[i];
-        j = i - 1;
- 
-        while (j >= 0 && arr[j] > key) {
-            arr[j + 1] = arr[j];
-            j = j - 1;
-        }
-        arr[j + 1] = key;
-    }
+int compare( const void * n1, const void * n2)
+{
+    return (*(int*)n1 - *(int*)n2);
 }
-
 
 float minMax(int array[SIZE], int *min, int *max)
 {
@@ -66,12 +57,11 @@ void bucketSort(int arr[SIZE], int n){
     }
     
     // sort the buckets
-    #pragma omp parallel shared(b,index) 
-    {
-      #pragma omp for
-      for (int i = 0; i < n; i++)
-        insertion_sort(b[i], index[i]);
-    }
+    
+    #pragma omp parallel for schedule(dynamic)
+    for (int i = 0; i < n; i++)
+    qsort(b[i], index[i],sizeof(int),compare);
+    
 
 
     // concatenate buckets (gather step)
@@ -90,17 +80,30 @@ int main(){
         arr[i] = rand()%100;
     }
 
-    printf("Original array:\n");
-    for (int i = 0; i < SIZE; i++)
-        printf("%d ", arr[i]);
-    printf("\n");
+    // printf("Original array:\n");
+    // for (int i = 0; i < SIZE; i++)
+    //     printf("%d ", arr[i]);
+    // printf("\n");
+
+    struct timeval start, end;
+
+    gettimeofday(&start,0);
 
     bucketSort(arr, BUCKETNUM);
 
-    printf("\nSorted array:\n");
-    for (int i = 0; i < SIZE; i++)
-        printf("%d ", arr[i]);
-    printf("\n");
+    gettimeofday(&end,0);
+
+    long sec = end.tv_sec - start.tv_sec;
+    long micro = end.tv_usec - start.tv_usec;
+    double elapsed = sec + micro*1e-6;
+    printf("Elapsed time: %.3f seconds.\n", elapsed);
+    
+    // printf("Result is: %d\n", ans);
+
+    // printf("\nSorted array:\n");
+    // for (int i = 0; i < SIZE; i++)
+    //     printf("%d ", arr[i]);
+    // printf("\n");
     
     return 0;
     

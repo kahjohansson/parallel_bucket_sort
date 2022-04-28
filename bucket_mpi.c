@@ -1,124 +1,156 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-#include <math.h>
-#include <mpi.h>
+#include<stdlib.h>
+#include<stdio.h>
+#include<unistd.h>
+#include<mpi.h>
+#include<math.h>
+#include<time.h>
+
+#define ARRAY_SIZE 20000
+#define MAX_NUM 100
 
 
-#define SIZE 200
-#define BUCKETNUM 10
+// Struct que define opções de config
+typedef struct {
+  int rank, size, array_size, slice, max_num;
+} Param;
 
-void insertion_sort(int arr[SIZE], int n){
-    int i, key, j;
-    for (i = 1; i < n; i++) {
-        key = arr[i];
-        j = i - 1;
- 
-        while (j >= 0 && arr[j] > key) {
-            arr[j + 1] = arr[j];
-            j = j - 1;
-        }
-        arr[j + 1] = key;
-    }
+// Struct que define o bucket
+typedef struct {
+  int * array;
+  int index;
+} Bucket;
+
+void bucket_insert(Bucket *b, int x){
+  b->array[b->index] = x;
+  b->index = b->index+1;
 }
 
-
-float minMax(int array[SIZE], int *min, int *max)
+int compare( const void * n1, const void * n2)
 {
-  int length;
-  length = SIZE;
-  int i = 1;
-  *max = array[0];
-  *min = array[0];
-
-  for (i; i<length; i++) {
-    if (*max < array[i])
-      *max = array[i];
-
-    if (*min > array[i])
-      *min = array[i];
-  }
- }  
-
-
-void bucketSort(int arr[SIZE], int n, int pid, int bucket_per_proc){
-
-    if (pid == 0){
-
-    int max, min;
-    minMax(arr,&min,&max);
-    float value = (max - min) / (n-1);
-    int range = ceil(value);
-
-    int bucket_size = 3*(SIZE/n);
-    int b[n][bucket_size];
-    int index[n];
-    for (int i=0;i<n;i++)
-        index[i] = 0;
-    
-    double max_index = n-2;
-
-    // assign buckets for each element from arr (scatter step)
-    for (int i = 0; i < SIZE; i++) {
-        int bi = (arr[i] - min) / range; // Index in bucket
-
-        if (bi > max_index){
-            bi = max_index;
-        }
-        b[bi][index[bi]] = arr[i];
-        index[bi]++;
-    }
-    
-    }
-    
-    // sort the buckets
-    for (int i = 0; i < n; i++)
-        insertion_sort(b[i], index[i]);
-
-    if (pid == 0){
-
-    // concatenate buckets (gather step)
-    int indx = 0;
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < index[i]; j++)
-            arr[indx++] = b[i][j];
-    }
+    return (*(int*)n1 - *(int*)n2);
 }
+
+void slave(Param * p) {
+
+  // Timer
+  double start, end;
+
+  int i;
+
+  // número de baldes
+  int num_buckets = p->size;
+
+  // tamanho de cada balde
+  int bucket_size = ceil(p->array_size/(float)p->size);
+
+  int small_bucket_size = bucket_size;
+
+  int * array;
+
+  if(p->rank == 0){
+    start = MPI_Wtime();
+
+    array = (int *) malloc(sizeof(int)*p->array_size);
+
+    srand(time(NULL));
+
+    for(int i = 0; i < p->array_size; i++)
+      array[i] = rand()%(p->max_num);
+  
+    // fprintf(stderr, "\n\nOriginal Array:\n");
+    // for(i=0;i<p->array_size;i++)
+    //   fprintf(stderr, "%d ",array[i]);
+    // fprintf(stderr, "\n");
+    
+  }
+  Bucket ** buckets = (Bucket **) malloc(sizeof(Bucket*)*num_buckets);
+  for(i=0;i<num_buckets;i++){
+    buckets[i] = (Bucket *) malloc(sizeof(Bucket));
+    buckets[i]->array = (int*) malloc(sizeof(int)*small_bucket_size*2);
+    buckets[i]->index = 0;
+  }
+
+  Bucket bucket;
+
+  int *my_bucket_array = (int*) malloc(sizeof(int)*bucket_size*4);
+  bucket.array = my_bucket_array;
+  bucket.index = 0;
+
+  // espalha o array entre os baldes
+  MPI_Scatter(array, bucket_size, MPI_INT, bucket.array, bucket_size, MPI_INT,0,MPI_COMM_WORLD);
+  int dest;
+
+  for(i=0;i<bucket_size;i++){
+    dest = (bucket.array[i] * num_buckets)/p->max_num;
+
+    if(dest==p->rank)
+      bucket_insert(&bucket, bucket.array[i]);
+    else
+      bucket_insert(buckets[dest],bucket.array[i]);
+  }
+  MPI_Request * requests = (MPI_Request *) malloc(sizeof(MPI_Request) * p->size);
+
+  for(i=0; i<p->size; i++) 
+    if(i != p->rank)
+      MPI_Isend(buckets[i]->array, small_bucket_size*2,MPI_INT,i,buckets[i]->index,MPI_COMM_WORLD, &requests[i]);
+  MPI_Status status;
+  
+  int current = bucket.index;
+
+  for(i=0;i<p->size-1;i++){
+    MPI_Recv(&bucket.array[current],small_bucket_size*2,MPI_INT,MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD, &status);
+    current+=status.MPI_TAG;
+  }
+  bucket.index = current;
+
+  qsort(&bucket.array[0], current, sizeof(int),compare);
+
+  int * sizes = (int *) malloc(sizeof(int)*p->size);
+  MPI_Gather(&current,1,MPI_INT,sizes,1,MPI_INT,0,MPI_COMM_WORLD);
+
+  int * disp = (int *) malloc(sizeof(int)*p->size);
+  if(p->rank == 0){
+    disp[0] = 0;
+    for(i=1; i<p->size+1;i++)
+      disp[i] = disp[i-1] + sizes[i-1];
+  }
+
+  MPI_Gatherv(bucket.array,current,MPI_INT,array,sizes,disp,MPI_INT,0,MPI_COMM_WORLD);
+
+  if (p->rank == 0) {
+    end = MPI_Wtime();
+    fprintf(stderr,"\nElapsed time: %f\n",end-start);
+    // for(i=0;i<p->array_size;i++){
+    //   fprintf(stdout,"%d ", array[i]);
+    // }
+    // fprintf(stdout,"\n ");
+    free(array);
+  }
+  return;
+}
+
 
 int main(int argc, char **argv){
+  int rank, size;
 
-    int my_id, root_process, ierr, num_procs, an_id;
-    MPI_Status status;
-   
-    ierr = MPI_Init(&argc, &argv);
+  if ( MPI_Init(&argc, &argv) != MPI_SUCCESS) {
+    fprintf(stderr, "Não foi possível inicializar o MPI.\n");
+    return -1;
+  }
 
-    root_process = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    ierr = MPI_Comm_rank(MPI_COMM_WORLD, &my_id);
-    ierr = MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+  Param p;
 
-    if(my_id == root_process){
+  p.rank = rank;
+  p.size = size;
 
-        bucket_per_proc = BUCKETNUM / num_procs;
+  p.array_size = ARRAY_SIZE;
+  p.max_num = MAX_NUM;
 
-        srand(time(NULL));
-        int arr[SIZE];
 
-        // fill array with random values 
-        for(int i=0;i<SIZE;i++){
-            arr[i] = rand()%100;
-        }
-
-    }
-    bucketSort(arr, BUCKETNUM, my_id, bucket_per_proc);
-
-    if(my_id == root_process) {
-
-        // printf("\nSorted array:\n");
-        // for (int i = 0; i < SIZE; i++)
-        //     printf("%d ", arr[i]);
-        // printf("\n\n");
-    }
-    
-    return 0;
+  slave(&p);
+  MPI_Finalize();
+  return 0;
 }
