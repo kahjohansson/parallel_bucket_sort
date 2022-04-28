@@ -1,24 +1,24 @@
-implementation;number of threads;parallel_time(elapsed);user time; system time;
-Sequential;1;0.694;0.71;0.00;0.707;
-Sequential;1;0.688;0.69;0.01;0.699;
-OpenMP_Dynamic;2;0.398;0.73;0.00;0.403;
-OpenMP_Dynamic;2;0.396;0.73;0.00;0.404;
-OpenMP_Dynamic;2;0.392;0.72;0.00;0.396;
-OpenMP_Dynamic;4;0.263;0.96;0.01;0.270;
-OpenMP_Dynamic;4;0.259;0.96;0.00;0.268;
-OpenMP_Dynamic;4;0.276;1.00;0.02;0.284;
-OpenMP_Dynamic;8;0.239;1.28;0.00;0.244;
-OpenMP_Dynamic;8;0.250;1.34;0.00;0.256;
-OpenMP_Dynamic;8;0.260;1.38;0.00;0.269;
-OpenMP_Static;2;0.387;0.72;0.01;0.393;
-OpenMP_Static;2;0.392;0.75;0.00;0.402;
-OpenMP_Static;2;0.391;0.74;0.00;0.402;
-OpenMP_Static;4;0.286;0.89;0.00;0.290;
-OpenMP_Static;4;0.315;0.96;0.00;0.322;
-OpenMP_Static;8;0.231;1.17;0.01;0.243;
-OpenMP_Static;8;0.250;1.28;0.00;0.260;
-MPI;2;1.634661;3.37;0.07;1.852;
-MPI;2;1.627129;3.33;0.06;1.774;
-MPI;4;0.828986;3.42;0.06;0.970;
-MPI;4;0.817810;3.41;0.03;0.971;
+implementation;number of threads;parallel_time(elapsed);user time; system time
+Sequential;1;0.694;0.71;0.00;0.707
+Sequential;1;0.688;0.69;0.01;0.699
+OpenMP_Dynamic;2;0.398;0.73;0.00;0.403
+OpenMP_Dynamic;2;0.396;0.73;0.00;0.404
+OpenMP_Dynamic;2;0.392;0.72;0.00;0.396
+OpenMP_Dynamic;4;0.263;0.96;0.01;0.270
+OpenMP_Dynamic;4;0.259;0.96;0.00;0.268
+OpenMP_Dynamic;4;0.276;1.00;0.02;0.284
+OpenMP_Dynamic;8;0.239;1.28;0.00;0.244
+OpenMP_Dynamic;8;0.250;1.34;0.00;0.256
+OpenMP_Dynamic;8;0.260;1.38;0.00;0.269
+OpenMP_Static;2;0.387;0.72;0.01;0.393
+OpenMP_Static;2;0.392;0.75;0.00;0.402
+OpenMP_Static;2;0.391;0.74;0.00;0.402
+OpenMP_Static;4;0.286;0.89;0.00;0.290
+OpenMP_Static;4;0.315;0.96;0.00;0.322
+OpenMP_Static;8;0.231;1.17;0.01;0.243
+OpenMP_Static;8;0.250;1.28;0.00;0.260
+MPI;2;1.634661;3.37;0.07;1.852
+MPI;2;1.627129;3.33;0.06;1.774
+MPI;4;0.828986;3.42;0.06;0.970
+MPI;4;0.817810;3.41;0.03;0.971
 
