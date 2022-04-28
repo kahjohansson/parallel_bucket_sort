@@ -3,10 +3,10 @@ import fileinput, re
 
 metrics = list()
 for i, line in enumerate(fileinput.input()):
-    print(line)
+    line = line.replace(',','.')
     if i == 0:
       continue
-    a = re.findall(r'[+-]?\d+\.\d+',line)
+    a = re.findall(r'[+-]?\d+\,\d+',line)
     if i == 2:
       metrics.insert(0,line.split(' ')[3])
       metrics.insert(1,line.split(' ')[2])

@@ -8,4 +8,4 @@ exec mpicc bucket_mpi.c -lm -o MPI &
 # {time ./Sequential} |& python3 save_time.py
 # {time ./OpenMP_Dynamic} |& python3 save_time.py
 # {time ./OpenMP_Static} |& python3 save_time.py
-# {time ./MPI} |& python3 save_time_mpi.py
+# {time mpirun -np 2 MPI} |& python3 save_time_mpi.py
