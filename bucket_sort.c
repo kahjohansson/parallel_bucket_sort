@@ -4,7 +4,7 @@
 #include <time.h>
 #include <math.h>
 
-#define SIZE 20000
+#define SIZE 100000
 #define BUCKETNUM 10
 
 int compare( const void * n1, const void * n2)

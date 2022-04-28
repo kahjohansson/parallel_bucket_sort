@@ -5,10 +5,6 @@
 #include<math.h>
 #include<time.h>
 
-#define ARRAY_SIZE 20000
-#define MAX_NUM 100
-
-
 // Struct que define opções de config
 typedef struct {
   int rank, size, array_size, slice, max_num;
@@ -30,7 +26,7 @@ int compare( const void * n1, const void * n2)
     return (*(int*)n1 - *(int*)n2);
 }
 
-void slave(Param * p) {
+void mpi_bucket(Param * p) {
 
   // Timer
   double start, end;
@@ -42,8 +38,6 @@ void slave(Param * p) {
 
   // tamanho de cada balde
   int bucket_size = ceil(p->array_size/(float)p->size);
-
-  int small_bucket_size = bucket_size;
 
   int * array;
 
@@ -57,16 +51,16 @@ void slave(Param * p) {
     for(int i = 0; i < p->array_size; i++)
       array[i] = rand()%(p->max_num);
   
-    // fprintf(stderr, "\n\nOriginal Array:\n");
-    // for(i=0;i<p->array_size;i++)
-    //   fprintf(stderr, "%d ",array[i]);
-    // fprintf(stderr, "\n");
+    fprintf(stderr, "\n\nOriginal Array:\n");
+    for(i=0;i<p->array_size;i++)
+      fprintf(stderr, "%d ",array[i]);
+    fprintf(stderr, "\n");
     
   }
   Bucket ** buckets = (Bucket **) malloc(sizeof(Bucket*)*num_buckets);
   for(i=0;i<num_buckets;i++){
     buckets[i] = (Bucket *) malloc(sizeof(Bucket));
-    buckets[i]->array = (int*) malloc(sizeof(int)*small_bucket_size*2);
+    buckets[i]->array = (int*) malloc(sizeof(int)*bucket_size*2);
     buckets[i]->index = 0;
   }
 
@@ -92,13 +86,13 @@ void slave(Param * p) {
 
   for(i=0; i<p->size; i++) 
     if(i != p->rank)
-      MPI_Isend(buckets[i]->array, small_bucket_size*2,MPI_INT,i,buckets[i]->index,MPI_COMM_WORLD, &requests[i]);
+      MPI_Isend(buckets[i]->array, bucket_size*2,MPI_INT,i,buckets[i]->index,MPI_COMM_WORLD, &requests[i]);
   MPI_Status status;
   
   int current = bucket.index;
 
   for(i=0;i<p->size-1;i++){
-    MPI_Recv(&bucket.array[current],small_bucket_size*2,MPI_INT,MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD, &status);
+    MPI_Recv(&bucket.array[current],bucket_size*2,MPI_INT,MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD, &status);
     current+=status.MPI_TAG;
   }
   bucket.index = current;
@@ -120,10 +114,10 @@ void slave(Param * p) {
   if (p->rank == 0) {
     end = MPI_Wtime();
     fprintf(stderr,"\nElapsed time: %f\n",end-start);
-    // for(i=0;i<p->array_size;i++){
-    //   fprintf(stdout,"%d ", array[i]);
-    // }
-    // fprintf(stdout,"\n ");
+    for(i=0;i<p->array_size;i++){
+      fprintf(stdout,"%d ", array[i]);
+    }
+    fprintf(stdout,"\n ");
     free(array);
   }
   return;
@@ -146,11 +140,11 @@ int main(int argc, char **argv){
   p.rank = rank;
   p.size = size;
 
-  p.array_size = ARRAY_SIZE;
-  p.max_num = MAX_NUM;
+  p.array_size = 100000;
+  p.max_num = 1000;
 
 
-  slave(&p);
+  mpi_bucket(&p);
   MPI_Finalize();
   return 0;
 }
