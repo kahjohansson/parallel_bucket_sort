@@ -1,4 +1,4 @@
-implementation;number of threads;parallel_time(elapsed);user time;system time;
+implementation;number_of_threads;parallel_time_elapsed;user_time;system_time;real_time
 Sequential;1;0.694;0.71;0.00;0.707
 Sequential;1;0.688;0.69;0.01;0.699
 OpenMP_Dynamic;2;0.398;0.73;0.00;0.403
